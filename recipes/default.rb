@@ -2,9 +2,9 @@
 # Cookbook Name:: buildpack
 # Recipe:: default
 #
-# Copyright (C) 2015 YOUR_NAME
+# Copyright (C) 2015 Yamashita, Yuu
 #
-# All rights reserved - Do Not Redistribute
+# Apache 2.0
 #
 
 package "bash"
