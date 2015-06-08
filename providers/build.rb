@@ -54,14 +54,17 @@ end
 action :detect do
   buildpack_dir = provision(new_resource.buildpack_url, new_resource.buildpack_dir)
   detect(buildpack_dir, new_resource.build_dir, new_resource.environment)
+  new_resource.updated_by_last_action(true)
 end
 
 action :compile do
   buildpack_dir = provision(new_resource.buildpack_url, new_resource.buildpack_dir)
   compile(buildpack_dir, new_resource.build_dir, new_resource.cache_dir, new_resource.env_dir, new_resource.environment)
+  new_resource.updated_by_last_action(true)
 end
 
 action :release do
   buildpack_dir = provision(new_resource.buildpack_url, new_resource.buildpack_dir)
   release(buildpack_dir, new_resource.build_dir, new_resource.environment)
+  new_resource.updated_by_last_action(true)
 end
