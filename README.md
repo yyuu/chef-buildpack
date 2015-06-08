@@ -14,7 +14,6 @@ Run `detect` and `compile` against `/var/www/my_app_name`.
 ```rb
 buildpack_build "my_app_name" do
   buildpack_url "https://github.com/heroku/heroku-buildpack-ruby.git"
-  buildpack_dir "/var/cache/buildpacks/heroku-buildpack-ruby"
   build_dir "/var/www/my_app_name"
   cache_dir "/var/cache/my_app_name"
   env_dir "/var/lib/my_app_name"
