@@ -16,3 +16,5 @@ gem 'berkshelf'
 
 gem "test-kitchen"
 gem "kitchen-vagrant"
+gem "rake"
+gem "stove", "~> 3.2.7"
