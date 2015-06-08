@@ -1,0 +1,7 @@
+name             'buildpack'
+maintainer       'YOUR_NAME'
+maintainer_email 'YOUR_EMAIL'
+license          'All rights reserved'
+description      'Installs/Configures buildpack'
+long_description 'Installs/Configures buildpack'
+version          '0.1.0'
