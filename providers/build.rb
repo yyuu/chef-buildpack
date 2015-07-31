@@ -16,7 +16,7 @@ def provision(buildpack_url, buildpack_dir)
   end
   buildpack_dir ||= ::File.join(Chef::Config[:file_cache_path], "buildpacks", ::File.basename(buildpack_url, ".git"))
   execute << "rm -fr #{Shellwords.shellescape(buildpack_dir)}"
-  execuet << "mkdir -p #{Shellwords.shellescape(::File.dirname(buildpack_dir))}"
+  execute << "mkdir -p #{Shellwords.shellescape(::File.dirname(buildpack_dir))}"
   checkout_options = []
   checkout_options << "--branch" << Shellwords.shellescape(revision) if revision
   checkout_options << "--depth" << "1"
