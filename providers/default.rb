@@ -14,7 +14,7 @@ def provision(buildpack_url, buildpack_dir)
   else
     repository = buildpack_url
   end
-  buildpack_dir ||= ::File.join(Chef::Config[:file_cache_path], "buildpacks", ::File.basename(buildpack_url, ".git"))
+  buildpack_dir ||= ::File.join(Chef::Config[:file_cache_path], "buildpacks", ::File.basename(repository, ".git"))
   execute << "rm -fr #{Shellwords.shellescape(buildpack_dir)}"
   execute << "mkdir -p #{Shellwords.shellescape(::File.dirname(buildpack_dir))}"
   checkout_options = []
