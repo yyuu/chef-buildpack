@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -e
+bootstrap_script="$(mktemp "/tmp/buildpack.XXXXXXXX.sh")"
+trap "rm -f \"${bootstrap_script}\"" EXIT
+chmod a+rx "${bootstrap_script}"
+cat <<EOS > "${bootstrap_script}"
+set -e
+export HOME=<%= Shellwords.shellescape(@home) %>
+cd "\${HOME}"
+shopt -s nullglob
+for profile in .profile.d/*; do
+  if [ -f "\${profile}" ]; then
+    . "\${profile}"
+  fi
+done
+shopt -u nullglob
+exec "\${SHELL:-sh}" "\$@"
+EOS
+sudo -u <%= Shellwords.shellescape(@runner) %> -- "${SHELL:-sh}" "${bootstrap_script}" "$@"

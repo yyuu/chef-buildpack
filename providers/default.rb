@@ -58,23 +58,15 @@ action :detect do
 end
 
 action :compile do
+  runner = shell_out!("whoami").stdout.strip rescue "root"
   buildpack_dir = provision(new_resource.buildpack_url, new_resource.buildpack_dir)
-  file ::File.join(new_resource.build_dir, "activate") do
+  template ::File.join(new_resource.build_dir, "activate") do
+    cookbook "buildpack"
     mode "0755"
-    content (<<-EOS).strip
-#!/usr/bin/env bash
-set -e
-export HOME="${PWD}"
-shopt -s nullglob
-for profile in "${HOME}/.profile.d"/*; do
-  if [ -f "${profile}" ]; then
-    . "${profile}"
-  fi
-done
-shopt -u nullglob
-exec sudo -u nobody "${SHELL:-sh}" "$@"
-    EOS
+    source "activate.erb"
+    variables :home => new_resource.build_dir, :runner => runner
   end
+  Chef::Log.info("Created \`activate' script at #{new_resource.build_dir.inspect}.")
   compile(buildpack_dir, new_resource.build_dir, new_resource.cache_dir, new_resource.env_dir, new_resource.environment)
   new_resource.updated_by_last_action(true)
 end
