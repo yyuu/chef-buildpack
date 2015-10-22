@@ -58,15 +58,17 @@ action :detect do
 end
 
 action :compile do
-  runner = shell_out!("whoami").stdout.strip rescue "root"
   buildpack_dir = provision(new_resource.buildpack_url, new_resource.buildpack_dir)
-  template ::File.join(new_resource.build_dir, "activate") do
-    cookbook "buildpack"
-    mode "0755"
-    source "activate.erb"
-    variables :home => new_resource.build_dir, :runner => runner
+  if new_resource.activate_file
+    runner = shell_out!("whoami").stdout.strip rescue "root"
+    template ::File.join(new_resource.build_dir, new_resource.activate_file) do
+      cookbook "buildpack"
+      mode "0755"
+      source "activate.erb"
+      variables :home => new_resource.build_dir, :runner => runner
+    end
+    Chef::Log.info("Created \`activate' script at #{new_resource.build_dir.inspect}.")
   end
-  Chef::Log.info("Created \`activate' script at #{new_resource.build_dir.inspect}.")
   compile(buildpack_dir, new_resource.build_dir, new_resource.cache_dir, new_resource.env_dir, new_resource.environment)
   new_resource.updated_by_last_action(true)
 end
