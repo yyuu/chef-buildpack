@@ -60,12 +60,14 @@ end
 action :compile do
   buildpack_dir = provision(new_resource.buildpack_url, new_resource.buildpack_dir)
   if new_resource.activate_file
-    runner = shell_out!("whoami").stdout.strip rescue "root"
     template ::File.join(new_resource.build_dir, new_resource.activate_file) do
       cookbook "buildpack"
       mode "0755"
       source "activate.erb"
-      variables :home => new_resource.build_dir, :runner => runner
+      variables({
+        :home => new_resource.build_dir,
+        :runner => new_resource.activate_runner,
+      })
     end
     Chef::Log.info("Created \`activate' script at #{new_resource.build_dir.inspect}.")
   end

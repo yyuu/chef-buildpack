@@ -9,3 +9,4 @@ attribute :build_dir, :kind_of => String, :required => true
 attribute :cache_dir, :kind_of => String, :default => nil
 attribute :env_dir, :kind_of => String, :default => nil
 attribute :activate_file, :kind_of => String, :default => "activate"
+attribute :activate_runner, :kind_of => String, :default => "root"
