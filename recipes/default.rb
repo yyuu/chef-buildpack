@@ -8,4 +8,6 @@
 #
 
 package "bash"
+package "curl"
 package "git"
+package "tar"
