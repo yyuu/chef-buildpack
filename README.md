@@ -12,7 +12,7 @@ Chef LWRP to build applications with using [buildpacks](https://devcenter.heroku
 Run `detect` and `compile` against `/var/www/my_app_name`.
 
 ```rb
-buildpack_build "my_app_name" do
+buildpack "my_app_name" do
   buildpack_url "https://github.com/heroku/heroku-buildpack-ruby.git"
   build_dir "/var/www/my_app_name"
   cache_dir "/var/cache/my_app_name"
