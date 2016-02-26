@@ -10,5 +10,14 @@ platforms:
       image: ubuntu:14.04
 suites:
   - name: default
+    attributes:
+      app:
+        buildpack_url: https://github.com/heroku/heroku-buildpack-ruby.git#v144
+    run_list:
+      - recipe[app]
+  - name: tag
+    attributes:
+      app:
+        buildpack_url: https://github.com/heroku/heroku-buildpack-ruby/archive/v144.tar.gz
     run_list:
       - recipe[app]

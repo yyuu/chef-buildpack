@@ -1,13 +1,14 @@
 package "ruby"
 include_recipe "buildpack"
+
 deploy_revision "app" do
-  revision node["app"]["revision"]
-  repository node["app"]["repository"]
-  deploy_to node["app"]["deploy_to"]
+  revision "v3.0.0"
+  repository "https://github.com/yyuu/myapp.git"
+  deploy_to "/srv/app"
   rollback_on_error true
   symlink_before_migrate({})
   before_symlink do
-    buildpack "app" do
+    buildpack "heroku-buildpack-ruby" do
       buildpack_url node["app"]["buildpack_url"]
       build_dir release_path
       cache_dir ::File.join(shared_path, "cache")
