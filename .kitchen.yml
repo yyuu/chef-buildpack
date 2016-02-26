@@ -3,12 +3,22 @@ driver:
   name: docker
   use_sudo: false
 provisioner:
-  name: chef_solo
+  name: chef_zero
 platforms:
   - name: ubuntu-14.04
     driver_config:
       image: ubuntu:14.04
+      require_chef_omnibus: 12.7.2
 suites:
   - name: default
+    attributes:
+      app:
+        buildpack_url: https://github.com/heroku/heroku-buildpack-ruby.git#v144
+    run_list:
+      - recipe[app]
+  - name: tag
+    attributes:
+      app:
+        buildpack_url: https://github.com/heroku/heroku-buildpack-ruby/archive/v144.tar.gz
     run_list:
       - recipe[app]
