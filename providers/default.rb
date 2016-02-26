@@ -7,25 +7,88 @@ def whyrun_supported?
   true
 end
 
-def provision(buildpack_url, buildpack_dir)
-  execute = []
-  if buildpack_url.index("#")
-    repository, revision = buildpack_url.split("#", 2)
+def buildpack_info(name, buildpack_url, buildpack_dir = nil)
+  buildpack_root = ::File.join(Chef::Config[:file_cache_path], "buildpacks")
+  case buildpack_url
+  when /\.tar\.gz$/
+    {
+      :format => :tgz,
+      :buildpack_url => buildpack_url,
+      :buildpack_dir => buildpack_dir || ::File.join(buildpack_root, name),
+    }
   else
-    repository = buildpack_url
+    if buildpack_url.index("#")
+      repository, revision = buildpack_url.split("#", 2)
+    else
+      repository = buildpack_url
+      revision = "origin/HEAD"
+    end
+    {
+      :format => :git,
+      :buildpack_url => repository,
+      :revision => revision,
+      :buildpack_dir => buildpack_dir || ::File.join(buildpack_root, name),
+    }
   end
-  buildpack_dir ||= ::File.join(Chef::Config[:file_cache_path], "buildpacks", ::File.basename(repository, ".git"))
-  execute << "rm -fr #{Shellwords.shellescape(buildpack_dir)}"
-  execute << "mkdir -p #{Shellwords.shellescape(::File.dirname(buildpack_dir))}"
-  checkout_options = []
-  checkout_options << "--branch" << Shellwords.shellescape(revision) if revision
-  checkout_options << "--depth" << "1"
-  checkout_options << "--quiet"
-  execute << "git clone #{checkout_options.join(" ")} #{Shellwords.shellescape(repository)} #{Shellwords.shellescape(buildpack_dir)}"
-  converge_by("Provisioning #{buildpack_url} at #{buildpack_dir}") do
-    shell_out!(execute.join(" && "))
+end
+
+def provision(info)
+  case info[:format]
+  when :git
+    provision_git(info)
+  when :tgz
+    provision_tgz(info)
+  else
+    fail("Unknown buildpack format: #{info[:format].inspect}")
   end
-  buildpack_dir
+end
+
+def provision_tgz(info)
+  buildpack_dir = info[:buildpack_dir]
+  buildpack_url = info[:buildpack_url]
+  bash "buildpack #{buildpack_dir}" do
+    code <<-SH
+      set -e
+      set -o pipefail
+      tmpdir="$(mktemp -d /tmp/buildpack.XXXXXXXX)"
+      on_exit() { rm -fr "${tmpdir}"; }
+      trap on_exit EXIT
+      cd "${tmpdir}"
+      curl -L --fail --retry 3 --retry-delay 1 --connect-timeout 3 --max-time 30 #{::Shellwords.shellescape(buildpack_url)} -s -o - | tar zxf -
+      mkdir -p #{::Shellwords.shellescape(::File.dirname(buildpack_dir))}
+      rm -fr #{::Shellwords.shellescape(buildpack_dir)}
+      mv -f * #{::Shellwords.shellescape(buildpack_dir)}
+    SH
+  end
+end
+
+def provision_git(info)
+  buildpack_dir = info[:buildpack_dir]
+  buildpack_url = info[:buildpack_url]
+  bash "buildpack #{buildpack_dir}" do
+    code <<-SH
+      set -e
+      mkdir -p #{::Shellwords.shellescape(::File.dirname(buildpack_dir))}
+      if [ -e #{::Shellwords.shellescape(::File.join(buildpack_dir, ".git"))} ]; then
+        if [ -e #{::Shellwords.shellescape(::File.join(buildpack_dir, ".git", "shallow"))} ]; then
+          rm -fr #{::Shellwords.shellescape(buildpack_dir)}
+        fi
+      else
+        rm -fr #{::Shellwords.shellescape(buildpack_dir)}
+      fi
+      if [ -d #{::Shellwords.shellescape(buildpack_dir)} ]; then
+        cd #{::Shellwords.shellescape(buildpack_dir)}
+        git config remote.origin.url #{::Shellwords.shellescape(buildpack_url)}
+        git config remote.origin.fetch "+refs/heads/*:refs/remote/origin/*"
+        git fetch
+      else
+        git clone #{::Shellwords.shellescape(buildpack_url)} #{::Shellwords.shellescape(buildpack_dir)}
+        cd #{::Shellwords.shellescape(buildpack_dir)}
+      fi
+      git reset --hard #{::Shellwords.shellescape(info[:revision])}
+      git clean -d -f -x
+    SH
+  end
 end
 
 def invoke(buildpack_dir, command, args=[], environment={})
@@ -52,13 +115,15 @@ def release(buildpack_dir, build_dir, environment={})
 end
 
 action :detect do
-  buildpack_dir = provision(new_resource.buildpack_url, new_resource.buildpack_dir)
-  detect(buildpack_dir, new_resource.build_dir, new_resource.environment)
+  info = buildpack_info(new_resource.name, new_resource.buildpack_url, new_resource.buildpack_dir)
+  provision(info)
+  detect(info[:buildpack_dir], new_resource.build_dir, new_resource.environment)
   new_resource.updated_by_last_action(true)
 end
 
 action :compile do
-  buildpack_dir = provision(new_resource.buildpack_url, new_resource.buildpack_dir)
+  info = buildpack_info(new_resource.name, new_resource.buildpack_url, new_resource.buildpack_dir)
+  provision(info)
   if new_resource.activate_file
     template ::File.join(new_resource.build_dir, new_resource.activate_file) do
       cookbook "buildpack"
@@ -71,12 +136,13 @@ action :compile do
     end
     Chef::Log.info("Created \`activate' script at #{new_resource.build_dir.inspect}.")
   end
-  compile(buildpack_dir, new_resource.build_dir, new_resource.cache_dir, new_resource.env_dir, new_resource.environment)
+  compile(info[:buildpack_dir], new_resource.build_dir, new_resource.cache_dir, new_resource.env_dir, new_resource.environment)
   new_resource.updated_by_last_action(true)
 end
 
 action :release do
-  buildpack_dir = provision(new_resource.buildpack_url, new_resource.buildpack_dir)
-  release(buildpack_dir, new_resource.build_dir, new_resource.environment)
+  info = buildpack_info(new_resource.name, new_resource.buildpack_url, new_resource.buildpack_dir)
+  provision(info)
+  release(info[:buildpack_dir], new_resource.build_dir, new_resource.environment)
   new_resource.updated_by_last_action(true)
 end
