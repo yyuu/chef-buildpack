@@ -21,7 +21,7 @@ def buildpack_info(name, buildpack_url, buildpack_dir = nil)
       repository, revision = buildpack_url.split("#", 2)
     else
       repository = buildpack_url
-      revision = "origin/HEAD"
+      revision = "HEAD"
     end
     {
       :format => :git,
@@ -84,6 +84,15 @@ def provision_git(info)
       else
         git clone #{::Shellwords.shellescape(buildpack_url)} #{::Shellwords.shellescape(buildpack_dir)}
         cd #{::Shellwords.shellescape(buildpack_dir)}
+      fi
+      if git show-ref -q --verify #{::Shellwords.shellescape("refs/tags/#{info[:revision]}")}; then
+        git reset --hard #{::Shellwords.shellescape("refs/tags/#{info[:revision]}")}
+      else
+        if git show-ref -q --verify #{::Shellwords.shellescape("refs/remotes/origin/#{info[:revision]}")}; then
+          git reset --hard #{::Shellwords.shellescape("refs/remotes/origin/#{info[:revision]}")}
+        else
+          git reset --hard #{::Shellwords.shellescape(info[:revision])}
+        fi
       fi
       git reset --hard #{::Shellwords.shellescape(info[:revision])}
       git clean -d -f -x
