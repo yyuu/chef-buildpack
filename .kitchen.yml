@@ -3,11 +3,12 @@ driver:
   name: docker
   use_sudo: false
 provisioner:
-  name: chef_solo
+  name: chef_zero
 platforms:
   - name: ubuntu-14.04
     driver_config:
       image: ubuntu:14.04
+      require_chef_omnibus: 12.7.2
 suites:
   - name: default
     attributes:
