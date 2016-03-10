@@ -96,7 +96,6 @@ def provision_git(info)
           git reset --hard #{::Shellwords.shellescape(info[:revision])}
         fi
       fi
-      git reset --hard #{::Shellwords.shellescape(info[:revision])}
       git clean -d -f -x
     SH
   end
