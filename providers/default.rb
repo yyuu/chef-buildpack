@@ -49,6 +49,7 @@ def provision_tgz(info)
   bash "buildpack #{buildpack_dir}" do
     code <<-SH
       set -e
+      set -x
       set -o pipefail
       tmpdir="$(mktemp -d /tmp/buildpack.XXXXXXXX)"
       on_exit() { rm -fr "${tmpdir}"; }
@@ -68,6 +69,7 @@ def provision_git(info)
   bash "buildpack #{buildpack_dir}" do
     code <<-SH
       set -e
+      set -x
       mkdir -p #{::Shellwords.shellescape(::File.dirname(buildpack_dir))}
       if [ -e #{::Shellwords.shellescape(::File.join(buildpack_dir, ".git"))} ]; then
         if [ -e #{::Shellwords.shellescape(::File.join(buildpack_dir, ".git", "shallow"))} ]; then
