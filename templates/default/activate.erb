@@ -1,19 +1,17 @@
-#!/usr/bin/env bash
+#!/bin/sh -e
+bootstrap="$(mktemp "/tmp/bootstrap-XXXXXXXX.sh")"
+trap "rm -f \"${bootstrap}\"" EXIT
+chmod a+rx "${bootstrap}"
+cat <<EOS > "${bootstrap}"
 set -e
-bootstrap_script="$(mktemp "/tmp/buildpack.XXXXXXXX.sh")"
-trap "rm -f \"${bootstrap_script}\"" EXIT
-chmod a+rx "${bootstrap_script}"
-cat <<EOS > "${bootstrap_script}"
-set -e
+ORIG_HOME="\${HOME}"
 export HOME=<%= Shellwords.shellescape(@home) %>
-cd "\${HOME}"
 shopt -s nullglob
-for profile in .profile.d/*; do
-  if [ -f "\${profile}" ]; then
-    . "\${profile}"
-  fi
+for profile in "\${HOME}/.profile.d"/*; do
+  . "\${profile}"
 done
 shopt -u nullglob
+export HOME="\${ORIG_HOME}"
 exec "\${SHELL:-sh}" "\$@"
 EOS
-sudo -u <%= Shellwords.shellescape(@runner) %> -- "${SHELL:-sh}" "${bootstrap_script}" "$@"
+sudo -u <%= Shellwords.shellescape(@runner) %> -- "${SHELL:-sh}" -e "${bootstrap}" "$@"
