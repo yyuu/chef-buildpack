@@ -135,13 +135,15 @@ action :compile do
   info = buildpack_info(new_resource.name, new_resource.buildpack_url, new_resource.buildpack_dir)
   provision(info)
   if new_resource.activate_file
+    if new_resource.activate_runner
+      Chef::Log.warn("activate_runner has been deprecated and is not supported anymore.")
+    end
     template ::File.join(new_resource.build_dir, new_resource.activate_file) do
       cookbook "buildpack"
       mode "0755"
       source "activate.erb"
       variables({
         :home => new_resource.build_dir,
-        :runner => new_resource.activate_runner,
       })
     end
     Chef::Log.info("Created \`activate' script at #{new_resource.build_dir.inspect}.")
