@@ -1,17 +1,12 @@
 #!/bin/sh -e
-bootstrap="$(mktemp "/tmp/bootstrap-XXXXXXXX.sh")"
-trap "rm -f \"${bootstrap}\"" EXIT
-chmod a+rx "${bootstrap}"
-cat <<EOS > "${bootstrap}"
 set -e
-ORIG_HOME="\${HOME}"
+ORIG_HOME="${HOME}"
 export HOME=<%= Shellwords.shellescape(@home) %>
-shopt -s nullglob
-for profile in "\${HOME}/.profile.d"/*; do
-  . "\${profile}"
+for profile in "${HOME}/.profile.d"/*; do
+  if [ -f "${profile}" ]; then
+    . "${profile}"
+  fi
 done
-shopt -u nullglob
-export HOME="\${ORIG_HOME}"
-exec "\${SHELL:-sh}" "\$@"
-EOS
-sudo -u <%= Shellwords.shellescape(@runner) %> -- "${SHELL:-sh}" -e "${bootstrap}" "$@"
+export HOME="${ORIG_HOME}"
+cd <%= Shellwords.shellescape(@home) %>
+exec "${SHELL:-sh}" "$@"
